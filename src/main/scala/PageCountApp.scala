@@ -23,7 +23,7 @@ object PageCountApp extends App {
 
   //Q4. Derive an RDD containing only English pages from ​pagecounts
 
-  val enRdd:RDD[String] = pagecounts.filter(page => page.split(" ").apply(1).contains("en"))
+  val enRdd:RDD[String] = pagecounts.filter(page => page.split(" ").apply(0).contains("en"))
 
   //Q5. How many records are there for English pages?
 
@@ -31,9 +31,14 @@ object PageCountApp extends App {
 
   //Q6. ​Find the pages that were requested more than 200,000 times in total.
 
-  val moreReqPage:RDD[String] = pagecounts.filter(page => page.split(" ").apply(2).toLong > 200000 )
+  val moreReqPageRdd: RDD[(String, Long)] = pagecounts.map { x =>
+    val ss = x.split(" ")
+    (ss.apply(0),ss.apply(2).toLong)
+  }
 
-  moreReqPage.top(10).foreach(println)
+  val moreReqPage: RDD[(String, Long)] = moreReqPageRdd.reduceByKey((x, y) => x+y)
 
-  println(s"There are :::: ${moreReqPage.count()} ::: pages that were requested more than 200,000 times ")
+  moreReqPage.filter(line => line._2 > 200000L).top(10).foreach(println)
+
+  println(s"There are :::: ${moreReqPage.filter(line => line._2 > 200000L).count()} ::: pages that were requested more than 200,000 times ")
 }
